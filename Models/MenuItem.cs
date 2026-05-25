@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace Obiektuwa.Models {
-    internal class MenuItem {
+    public class MenuItem {
         public enum FoodCategory {
             None,
             Starter,
