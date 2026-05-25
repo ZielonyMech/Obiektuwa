@@ -14,11 +14,11 @@ namespace Obiektuwa.Models
 
 
         public int id;
-        public string comment { get; init; }
-        public bool isTakeaway { get; set; }
+        public string? Comment { get; init; }
+        public bool IsTakeaway { get; set; }
         private OrderState state { get; set; }
 
-        public List<Product> positions { get; set; } = new List<Product>();
+        public List<MenuItem> Positions { get; set; } = new List<MenuItem>();
 
 
         public void ChangeState() {
@@ -28,15 +28,26 @@ namespace Obiektuwa.Models
         }
 
         public int CalculateFinalPrice() {
-            if (positions == null) {
+            if (Positions == null) {
                 return 0; 
             }
-            return (int)positions.Sum(p => p.productPrice);
+            return (int)Positions.Sum(p => p.Price);
         }
-  
 
-    
+        public static Order? operator +(Order? order, MenuItem? item) {
+            if (order != null && item != null) { 
+                order.Positions.Add(item);
+            }
+            return order;
+        }
 
+        public static Order? operator -(Order? order, MenuItem? item) { 
+            if(order != null && item != null)
+            {
+                order.Positions.Remove(item);
+            }
+            return order;
+        }
         
     }
 }
