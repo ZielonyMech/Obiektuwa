@@ -13,25 +13,27 @@ namespace Obiektuwa.Models
         }
 
 
-        public int id;
+        public Guid ID { get;  } = Guid.NewGuid();
         public string? Comment { get; init; }
         public bool IsTakeaway { get; set; }
-        private OrderState state { get; set; }
+        public OrderState State { get; private set; } = OrderState.inProgress;
 
-        public List<MenuItem> Positions { get; set; } = new List<MenuItem>();
+        public List<MenuItem> Positions { get; } = new List<MenuItem>();
 
 
-        public void ChangeState() {
-            if (state == OrderState.inProgress) {
-                state = OrderState.finished;
+        public void ChangeState(OrderState newState) {
+            if (State == OrderState.finished && newState == OrderState.inProgress) {
+                throw new InvalidOperationException("Te zamówienie zostało już zakończone!");
+            
             }
+            State = newState;
         }
 
-        public int CalculateFinalPrice() {
+        public double CalculateFinalPrice() {
             if (Positions == null) {
                 return 0; 
             }
-            return (int)Positions.Sum(p => p.Price);
+            return Positions.Sum(p => p.Price);
         }
 
         public static Order? operator +(Order? order, MenuItem? item) {
