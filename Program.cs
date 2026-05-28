@@ -19,6 +19,16 @@ namespace Obiektuwa {
 
             productRepo.BulkAdd(new() { product, product1 });
             productRepo.Save();
+
+            Order order1 = new Order();
+
+            order1 += product;
+            order1 += product1;
+            order1 += product;
+            order1 += product1;
+            order1 += product1;
+
+            order1.DisplayOrder();
         }
     }   
 }

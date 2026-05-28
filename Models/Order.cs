@@ -15,11 +15,10 @@ namespace Obiektuwa.Models
 
         public Guid ID { get;  } = Guid.NewGuid();
         public string? Comment { get; init; }
-        public bool IsTakeaway { get; set; }
+        public bool IsTakeaway { get; set; } = false;
         public OrderState State { get; private set; } = OrderState.inProgress;
 
-        public List<MenuItem> Positions { get; } = new List<MenuItem>();
-
+        public List<(MenuItem Item, uint Quantity)> Positions { get; } = new List<(MenuItem, uint)>();
 
         public void ChangeState(OrderState newState) {
             if (State == OrderState.finished && newState == OrderState.inProgress) {
@@ -33,23 +32,59 @@ namespace Obiektuwa.Models
             if (Positions == null) {
                 return 0; 
             }
-            return Positions.Sum(p => p.Price);
+            return Positions.Sum(p => p.Item.Price);
         }
 
-        public static Order? operator +(Order? order, MenuItem? item) {
-            if (order != null && item != null) { 
-                order.Positions.Add(item);
+        public static Order operator +(Order? order, MenuItem? item) {
+            if (order is null || item is null) {
+                throw new ArgumentException("Któryś z parametrów jest null!");
             }
+
+            if (order.Positions.Any(p => p.Item.ID == item.ID)) {
+                var existingPosition = order.Positions.First(p => p.Item.ID == item.ID);
+                order.Positions.Remove(existingPosition);
+                order.Positions.Add((item, existingPosition.Quantity + 1));
+            } else {
+                order.Positions.Add((item, 1));
+            }
+            
             return order;
         }
 
-        public static Order? operator -(Order? order, MenuItem? item) { 
-            if(order != null && item != null)
-            {
-                order.Positions.Remove(item);
+        public static Order operator -(Order? order, MenuItem? item) { 
+            if(order is null || item is null) {
+                throw new ArgumentException("Któryś z parametrów jest null!");
             }
+
+            if (!order.Positions.Any(p => p.Item.ID == item.ID)) {
+                throw new InvalidOperationException("Nie można usunąć pozycji, która nie istnieje w zamówieniu!");
+            }
+            
+            var existingPosition = order.Positions.First(p => p.Item.ID == item.ID);
+            
+            if (existingPosition.Quantity == 1) {
+                order.Positions.Remove(existingPosition);
+            }
+            else {
+                order.Positions.Remove(existingPosition);
+                order.Positions.Add((item, existingPosition.Quantity - 1));
+            }
+
             return order;
         }
         
+        public void DisplayOrder() {
+            Console.WriteLine($"Zamówienie ID: {ID}");
+            Console.WriteLine($"Komentarz: {Comment}");
+            Console.WriteLine($"Na wynos: {(IsTakeaway ? "Tak" : "Nie")}");
+            Console.WriteLine($"Stan zamówienia: {State}");
+            Console.WriteLine("Ilośc pozycji | Pozycja:");
+            
+            foreach (var (item, quantity) in Positions) {
+                Console.WriteLine($"{quantity} | {item}");
+            }
+
+            Console.WriteLine($"Łączna cena: {CalculateFinalPrice():f2} zł");
+        }
     }
 }
