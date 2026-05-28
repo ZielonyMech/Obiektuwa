@@ -1,24 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace Obiektuwa.Models
 {
     public class Order
     {
-        public enum OrderState{
+        public enum OrderState {
             inProgress,
             finished,
             canceled
         }
 
-
         public Guid ID { get;  } = Guid.NewGuid();
         public string? Comment { get; init; }
         public bool IsTakeaway { get; set; } = false;
         public OrderState State { get; private set; } = OrderState.inProgress;
-
         public List<(MenuItem Item, uint Quantity)> Positions { get; } = new List<(MenuItem, uint)>();
+
+        private OfferManager offerManager { get; init; }
+        public Order(OfferManager offerManager) {
+            this.offerManager = offerManager ?? throw new ArgumentNullException(nameof(offerManager));
+        }
 
         public void ChangeState(OrderState newState) {
             if (State == OrderState.finished && newState == OrderState.inProgress) {
@@ -32,7 +36,10 @@ namespace Obiektuwa.Models
             if (Positions == null) {
                 return 0; 
             }
-            return Positions.Sum(p => p.Item.Price);
+
+            var discounts = offerManager.CalculateFinalPriceWithDiscounts(Positions).discount;
+
+            return Positions.Sum(p => p.Item.Price * p.Quantity) - discounts;
         }
 
         public static Order operator +(Order? order, MenuItem? item) {
@@ -84,6 +91,7 @@ namespace Obiektuwa.Models
                 Console.WriteLine($"{quantity} | {item}");
             }
 
+            Console.WriteLine($"Zniżki: {offerManager.CalculateFinalPriceWithDiscounts(Positions).discount:f2} zł");
             Console.WriteLine($"Łączna cena: {CalculateFinalPrice():f2} zł");
         }
     }

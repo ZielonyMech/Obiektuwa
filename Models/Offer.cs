@@ -4,7 +4,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 
 namespace Obiektuwa.Models {
-    internal class Offer {
+    public class Offer {
         public enum DiscountType {
             FixedPrice,
             Percent,
@@ -14,8 +14,9 @@ namespace Obiektuwa.Models {
         public List<(MenuItem item, uint quantity)> RequiredPositions { get; init; }
         public (DiscountType type, double value) Discout;
         
-        public Offer(List<(MenuItem, uint)> requiredPositions) {
+        public Offer(List<(MenuItem, uint)> requiredPositions, (DiscountType type, double value) discount) {
             RequiredPositions = requiredPositions;
+            Discout = discount;
         }
 
         public double GetOfferBasePrice() {
@@ -37,6 +38,40 @@ namespace Obiektuwa.Models {
                 DiscountType.FixedAmount => baseOfferPrice - Discout.value,
                 _ => baseOfferPrice
             };
+        }
+
+        public double GetDiscountAmount() {
+            return Math.Round(GetOfferBasePrice() - GetFinalPrice(), 2);
+        }
+    }
+
+    public class OfferManager {
+        public List<Offer> Offers { get; init; } = new();
+    
+        public OfferManager(List<Offer> Offers) {
+            this.Offers = Offers;
+        }
+
+        public OfferManager() { }
+
+        public (double finalPrice, double discount) CalculateFinalPriceWithDiscounts(List<(MenuItem Item, uint Quantity)> orderPositions) {
+            double finalPrice = 0.0;
+            double discount = 0.0;  
+
+            foreach (var (item, quantity) in orderPositions) {
+                var offer = Offers.Find(offer => offer.RequiredPositions.Exists(pos => pos.item.ID == item.ID &&
+                                                                    quantity >= pos.quantity));
+                if (offer is null) continue;
+
+                finalPrice += offer.GetFinalPrice();
+                discount += offer.GetDiscountAmount();
+            }
+
+            return (finalPrice, discount);
+        }
+
+        public void AddOffer(Offer offer) {
+            Offers.Add(offer);
         }
     }
 }
