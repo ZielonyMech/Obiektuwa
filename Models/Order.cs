@@ -13,7 +13,7 @@ namespace Obiektuwa.Models
             canceled
         }
 
-        public Guid ID { get;  } = Guid.NewGuid();
+        public Guid ID { get; init; } = Guid.NewGuid();
         public string? Comment { get; init; }
         public bool IsTakeaway { get; set; } = false;
         public OrderState State { get; private set; } = OrderState.inProgress;

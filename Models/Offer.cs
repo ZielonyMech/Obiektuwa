@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using Obiektuwa.Classes;
 
 namespace Obiektuwa.Models {
     public class Offer {
@@ -45,21 +46,13 @@ namespace Obiektuwa.Models {
         }
     }
 
-    public class OfferManager {
-        public List<Offer> Offers { get; init; } = new();
-    
-        public OfferManager(List<Offer> Offers) {
-            this.Offers = Offers;
-        }
-
-        public OfferManager() { }
-
+    public class OfferManager : Repository<Offer> {
         public (double finalPrice, double discount) CalculateFinalPriceWithDiscounts(List<(MenuItem Item, uint Quantity)> orderPositions) {
             double finalPrice = 0.0;
             double discount = 0.0;  
 
             foreach (var (item, quantity) in orderPositions) {
-                var offer = Offers.Find(offer => offer.RequiredPositions.Exists(pos => pos.item.ID == item.ID &&
+                var offer = ObjectList.Find(offer => offer.RequiredPositions.Exists(pos => pos.item.ID == item.ID &&
                                                                     quantity >= pos.quantity));
                 if (offer is null) continue;
 
@@ -68,10 +61,6 @@ namespace Obiektuwa.Models {
             }
 
             return (finalPrice, discount);
-        }
-
-        public void AddOffer(Offer offer) {
-            Offers.Add(offer);
         }
     }
 }

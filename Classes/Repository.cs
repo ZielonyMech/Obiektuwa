@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace Obiektuwa.Classes {
-    internal class Repository<T> {
+    public class Repository<T> {
 
-        private readonly FileHandler<T> reader;
-        private List<T> ObjectList = new();
+        protected readonly FileHandler<T> reader;
+        protected List<T> ObjectList = new();
 
         public Repository(string? filepath = null) {
             string repositoryFilepath = filepath ?? Helpers.GetClassCacheDirectory<T>();

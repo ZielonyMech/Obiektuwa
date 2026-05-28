@@ -11,7 +11,7 @@ namespace Obiektuwa.Models {
             Dessert,
             Drink
         }
-        public Guid ID { get; } = Guid.NewGuid();
+        public Guid ID { get; init; } = Guid.NewGuid();
         public string Name { get; init; }
         public double Price { get; init; }
         public FoodCategory Type { get; init; }

@@ -20,7 +20,9 @@ namespace Obiektuwa {
 
             var offerManager = services.GetRequiredService<OfferManager>();
             Offer pizzaOffer = new(new() { (product, 2) }, (Offer.DiscountType.FixedPrice, 35.00));
-            offerManager.AddOffer(pizzaOffer);
+            Offer burgerOffer = new(new() { (product1, 3) }, (Offer.DiscountType.FixedAmount, 10.00));
+            offerManager.BulkAdd(new() { pizzaOffer, burgerOffer });
+            offerManager.Save();
 
             var productRepo = services.GetRequiredService<Repository<MenuItem>>();
 
