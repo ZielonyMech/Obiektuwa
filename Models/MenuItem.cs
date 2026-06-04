@@ -23,7 +23,7 @@ namespace Obiektuwa.Models {
         }
 
         public override string ToString() {
-            return $"ID: {ID.ToString()} Name: {Name} Price: {Price:f2}";
+            return $"ID: {ID.ToString()} Nazwa: {Name} Cena: {Price:f2}";
         }
     }
 }
