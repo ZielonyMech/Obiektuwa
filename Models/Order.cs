@@ -7,34 +7,39 @@ namespace Obiektuwa.Models
 {
     public class Order
     {
-        public enum OrderState {
+        public enum OrderState
+        {
             inProgress,
             finished,
             canceled
         }
 
+        //private readonly OfferManager _offerManager;
         public Guid ID { get; init; } = Guid.NewGuid();
-        public string? Comment { get; init; }
+        public string? Comment { get; set; }
         public bool IsTakeaway { get; set; } = false;
         public OrderState State { get; private set; } = OrderState.inProgress;
         public List<(MenuItem Item, uint Quantity)> Positions { get; } = new List<(MenuItem, uint)>();
 
-        private OfferManager offerManager { get; init; }
-        public Order(OfferManager offerManager) {
-            this.offerManager = offerManager ?? throw new ArgumentNullException(nameof(offerManager));
-        }
-
-        public void ChangeState(OrderState newState) {
-            if (State == OrderState.finished && newState == OrderState.inProgress) {
+        //public Order(OfferManager offerManager) { 
+        //
+        //    _offerManager = offerManager;
+        //}
+        
+        public void ChangeState(OrderState newState)
+        {
+            if (State == OrderState.finished && newState == OrderState.inProgress)
+            {
                 throw new InvalidOperationException("Te zamówienie zostało już zakończone!");
-            
             }
             State = newState;
         }
 
-        public double CalculateFinalPrice() {
-            if (Positions == null) {
-                return 0; 
+        public double CalculateFinalPrice(OfferManager offerManager)
+        {
+            if (Positions == null || Positions.Count == 0)
+            {
+                return 0;
             }
 
             var discounts = offerManager.CalculateFinalPriceWithDiscounts(Positions).discount;
@@ -42,57 +47,66 @@ namespace Obiektuwa.Models
             return Positions.Sum(p => p.Item.Price * p.Quantity) - discounts;
         }
 
-        public static Order operator +(Order? order, MenuItem? item) {
-            if (order is null || item is null) {
+        public static Order operator +(Order? order, MenuItem? item)
+        {
+            if (order is null || item is null)
+            {
                 throw new ArgumentException("Któryś z parametrów jest null!");
             }
-
-            if (order.Positions.Any(p => p.Item.ID == item.ID)) {
+            if (order.Positions.Any(p => p.Item.ID == item.ID))
+            {
                 var existingPosition = order.Positions.First(p => p.Item.ID == item.ID);
                 order.Positions.Remove(existingPosition);
                 order.Positions.Add((item, existingPosition.Quantity + 1));
-            } else {
+            }
+            else
+            {
                 order.Positions.Add((item, 1));
             }
-            
+
             return order;
         }
 
-        public static Order operator -(Order? order, MenuItem? item) { 
-            if(order is null || item is null) {
+        public static Order operator -(Order? order, MenuItem? item)
+        {
+            if (order is null || item is null)
+            {
                 throw new ArgumentException("Któryś z parametrów jest null!");
             }
-
-            if (!order.Positions.Any(p => p.Item.ID == item.ID)) {
+            if (!order.Positions.Any(p => p.Item.ID == item.ID))
+            {
                 throw new InvalidOperationException("Nie można usunąć pozycji, która nie istnieje w zamówieniu!");
             }
-            
+
             var existingPosition = order.Positions.First(p => p.Item.ID == item.ID);
-            
-            if (existingPosition.Quantity == 1) {
+
+            if (existingPosition.Quantity == 1)
+            {
                 order.Positions.Remove(existingPosition);
             }
-            else {
+            else
+            {
                 order.Positions.Remove(existingPosition);
                 order.Positions.Add((item, existingPosition.Quantity - 1));
             }
 
             return order;
         }
-        
-        public void DisplayOrder() {
+
+        public void DisplayOrder(OfferManager offerManager)
+        {
             Console.WriteLine($"Zamówienie ID: {ID}");
             Console.WriteLine($"Komentarz: {Comment}");
             Console.WriteLine($"Na wynos: {(IsTakeaway ? "Tak" : "Nie")}");
             Console.WriteLine($"Stan zamówienia: {State}");
             Console.WriteLine("Ilośc pozycji | Pozycja:");
-            
-            foreach (var (item, quantity) in Positions) {
+
+            foreach (var (item, quantity) in Positions)
+            {
                 Console.WriteLine($"{quantity} | {item}");
             }
-
             Console.WriteLine($"Zniżki: {offerManager.CalculateFinalPriceWithDiscounts(Positions).discount:f2} zł");
-            Console.WriteLine($"Łączna cena: {CalculateFinalPrice():f2} zł");
+            Console.WriteLine($"Łączna cena: {CalculateFinalPrice(offerManager):f2} zł");
         }
     }
 }
