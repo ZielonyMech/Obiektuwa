@@ -10,8 +10,8 @@ namespace Obiektuwa {
                 .AddSingleton<Repository<MenuItem>>()
                 .AddSingleton<OfferManager>()
                 .AddSingleton<OrderManager>()
+                .AddSingleton<AppMenu>()
                 .AddTransient<Order>()
-                .AddTransient<AppMenu>()
                 .BuildServiceProvider();
         }
 

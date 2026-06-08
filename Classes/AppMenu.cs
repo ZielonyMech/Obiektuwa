@@ -9,12 +9,13 @@ namespace Obiektuwa
     {
         private readonly Repository<MenuItem> _productRepo;
         private readonly OrderManager _orderManager;
+        //private readonly IServiceProvider _serviceProvider;
         private readonly OfferManager _offerManager;
-
         public AppMenu(Repository<MenuItem> productRepo, OrderManager orderManager, OfferManager offerManager)
         {
             _productRepo = productRepo;
             _orderManager = orderManager;
+            //_serviceProvider = serviceProvider;
             _offerManager = offerManager;
         }
 
@@ -56,6 +57,13 @@ namespace Obiektuwa
             }
         }
 
+        private void DisplayMenuItems(List<MenuItem> menuItems) {
+
+            for (int i = 0; i < menuItems.Count; i++) {
+                Console.WriteLine($"{i + 1}. {menuItems[i].Name} - {menuItems[i].Price:f2} zł");
+            }
+        }
+
         private void CreateNewOrder()
         {
             var menuItems = _productRepo.FindAll(x => true);
@@ -69,6 +77,7 @@ namespace Obiektuwa
                 return;
             }
 
+            //var newOrder = _serviceProvider.GetRequiredService<Order>();
             var newOrder = new Order();
             bool isOrdering = true;
 
@@ -78,10 +87,7 @@ namespace Obiektuwa
                 Console.WriteLine("=== TWORZENIE ZAMÓWIENIA ===");
                 Console.WriteLine("\nMenu:\n");
 
-                for (int i = 0; i < menuItems.Count; i++)
-                {
-                    Console.WriteLine($"{i + 1}. {menuItems[i].Name} - {menuItems[i].Price:f2} zł");
-                }
+                DisplayMenuItems(menuItems);
 
                 Console.WriteLine($"\nAktualna kwota: {newOrder.CalculateFinalPrice(_offerManager):f2} zł");
                 Console.WriteLine("Wpisz numer dania, aby go dodać (lub '0' aby zakończyć):");
@@ -144,18 +150,22 @@ namespace Obiektuwa
             Console.Clear();
             Console.WriteLine("=== AKTYWNE ZAMÓWIENIA ===");
             var activeOrders = _orderManager.GetActiveOrders();
+
             if (activeOrders.Count == 0)
             {
                 Console.WriteLine("Brak zamówień w trakcie realizacji.");
+                Console.WriteLine("\nWciśnij enter....");
+                Console.ReadKey();
+                return;
             }
-            else
-            {
-                foreach (var order in activeOrders)
+            
+            
+            foreach (var order in activeOrders)
                 {
                     Console.WriteLine("\n--------------------------");
                     order.DisplayOrder(_offerManager);
                 }
-            }
+           
             Console.WriteLine("\nWciśnij enter....");
             Console.ReadKey();
         }

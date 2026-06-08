@@ -14,12 +14,18 @@ namespace Obiektuwa.Models
             canceled
         }
 
+        //private readonly OfferManager _offerManager;
         public Guid ID { get; init; } = Guid.NewGuid();
         public string? Comment { get; set; }
         public bool IsTakeaway { get; set; } = false;
         public OrderState State { get; private set; } = OrderState.inProgress;
         public List<(MenuItem Item, uint Quantity)> Positions { get; } = new List<(MenuItem, uint)>();
 
+        //public Order(OfferManager offerManager) { 
+        //
+        //    _offerManager = offerManager;
+        //}
+        
         public void ChangeState(OrderState newState)
         {
             if (State == OrderState.finished && newState == OrderState.inProgress)
