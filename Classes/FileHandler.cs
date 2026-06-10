@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 
 namespace Obiektuwa.Classes {
-    internal class FileHandler<T> {
+    public class FileHandler<T> {
         private readonly string filepath;
         public FileHandler(string filepath) {
             ArgumentNullException.ThrowIfNull(filepath);

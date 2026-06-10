@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace Obiektuwa.Classes {
-    internal class Repository<T> {
+    public class Repository<T> {
 
-        private readonly FileHandler<T> reader;
-        private List<T> ObjectList = new();
+        protected readonly FileHandler<T> reader;
+        protected List<T> ObjectList = new();
 
         public Repository(string? filepath = null) {
             string repositoryFilepath = filepath ?? Helpers.GetClassCacheDirectory<T>();
@@ -23,14 +23,18 @@ namespace Obiektuwa.Classes {
             reader = new FileHandler<T>(repositoryFilepath);
         }
 
-        public T FindOne(Func<T, bool> conditions) {
+        public T? FindOne(Func<T, bool> conditions) {
             ArgumentNullException.ThrowIfNull(conditions);
-            return ObjectList.First(conditions);
+            return ObjectList.FirstOrDefault(conditions);
         }
 
         public List<T> FindAll(Predicate<T> conditions) {
             ArgumentNullException.ThrowIfNull(conditions);
             return ObjectList.FindAll(conditions);
+        }
+
+        public List<T> GetAll() {
+            return ObjectList;
         }
 
         public bool Remove(T obj) {

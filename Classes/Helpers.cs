@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Obiektuwa.Classes {
     internal class Helpers {
-        public static readonly string mainDirectory = "/cache";
+        public static readonly string mainDirectory = "\\cache";
         public static readonly string workingDirectory = Environment.CurrentDirectory;
 
         public static string GetClassCacheDirectory<T>() {
