@@ -14,18 +14,12 @@ namespace Obiektuwa.Models
             canceled
         }
 
-        //private readonly OfferManager _offerManager;
         public Guid ID { get; init; } = Guid.NewGuid();
         public string? Comment { get; set; }
         public bool IsTakeaway { get; set; } = false;
         public OrderState State { get; private set; } = OrderState.inProgress;
         public List<(MenuItem Item, uint Quantity)> Positions { get; } = new List<(MenuItem, uint)>();
 
-        //public Order(OfferManager offerManager) { 
-        //
-        //    _offerManager = offerManager;
-        //}
-        
         public void ChangeState(OrderState newState)
         {
             if (State == OrderState.finished && newState == OrderState.inProgress)
@@ -33,18 +27,6 @@ namespace Obiektuwa.Models
                 throw new InvalidOperationException("Te zamówienie zostało już zakończone!");
             }
             State = newState;
-        }
-
-        public double CalculateFinalPrice(OfferManager offerManager)
-        {
-            if (Positions == null || Positions.Count == 0)
-            {
-                return 0;
-            }
-
-            var discounts = offerManager.CalculateFinalPriceWithDiscounts(Positions).discount;
-
-            return Positions.Sum(p => p.Item.Price * p.Quantity) - discounts;
         }
 
         public static Order operator +(Order? order, MenuItem? item)
@@ -93,20 +75,27 @@ namespace Obiektuwa.Models
             return order;
         }
 
-        public void DisplayOrder(OfferManager offerManager)
+        public override string ToString() 
         {
-            Console.WriteLine($"Zamówienie ID: {ID}");
-            Console.WriteLine($"Komentarz: {Comment}");
-            Console.WriteLine($"Na wynos: {(IsTakeaway ? "Tak" : "Nie")}");
-            Console.WriteLine($"Stan zamówienia: {State}");
-            Console.WriteLine("Ilośc pozycji | Pozycja:");
+            var sb = new StringBuilder();
 
-            foreach (var (item, quantity) in Positions)
-            {
-                Console.WriteLine($"{quantity} | {item}");
+            sb.AppendLine($"Zamówienie ID: {ID}");
+            sb.AppendLine($"Komentarz: {Comment}");
+            sb.AppendLine($"Na wynos: {(IsTakeaway ? "Tak" : "Nie")}");
+            sb.AppendLine($"Stan zamówienia: {State}");
+            sb.AppendLine($"{"Ilość",-10} | Pozycja");
+            sb.AppendLine(new string('-', 40));
+
+            foreach (var (item, quantity) in Positions) {
+                sb.AppendLine($"{quantity,-10} | {item}");
             }
-            Console.WriteLine($"Zniżki: {offerManager.CalculateFinalPriceWithDiscounts(Positions).discount:f2} zł");
-            Console.WriteLine($"Łączna cena: {CalculateFinalPrice(offerManager):f2} zł");
+
+            return sb.ToString();
+        }
+
+        public double CalculateFinalPrice() 
+        {
+            return Positions.Sum(p => p.Item.Price * p.Quantity);
         }
     }
 }

@@ -23,14 +23,18 @@ namespace Obiektuwa.Classes {
             reader = new FileHandler<T>(repositoryFilepath);
         }
 
-        public T FindOne(Func<T, bool> conditions) {
+        public T? FindOne(Func<T, bool> conditions) {
             ArgumentNullException.ThrowIfNull(conditions);
-            return ObjectList.First(conditions);
+            return ObjectList.FirstOrDefault(conditions);
         }
 
         public List<T> FindAll(Predicate<T> conditions) {
             ArgumentNullException.ThrowIfNull(conditions);
             return ObjectList.FindAll(conditions);
+        }
+
+        public List<T> GetAll() {
+            return ObjectList;
         }
 
         public bool Remove(T obj) {

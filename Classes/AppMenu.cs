@@ -8,14 +8,14 @@ namespace Obiektuwa
     public class AppMenu
     {
         private readonly Repository<MenuItem> _productRepo;
-        private readonly OrderManager _orderManager;
-        //private readonly IServiceProvider _serviceProvider;
+        private readonly Repository<Order> _orderRepo;
+        private readonly Func<Order> _orderFactory;
         private readonly OfferManager _offerManager;
-        public AppMenu(Repository<MenuItem> productRepo, OrderManager orderManager, OfferManager offerManager)
+        public AppMenu(Repository<MenuItem> productRepo, Repository<Order> orderRepo, OfferManager offerManager, Func<Order> orderFactory)
         {
             _productRepo = productRepo;
-            _orderManager = orderManager;
-            //_serviceProvider = serviceProvider;
+            _orderRepo = orderRepo;
+            _orderFactory = orderFactory;
             _offerManager = offerManager;
         }
 
@@ -66,7 +66,7 @@ namespace Obiektuwa
 
         private void CreateNewOrder()
         {
-            var menuItems = _productRepo.FindAll(x => true);
+            var menuItems = _productRepo.GetAll();
 
             if (menuItems.Count == 0)
             {
@@ -77,8 +77,8 @@ namespace Obiektuwa
                 return;
             }
 
-            //var newOrder = _serviceProvider.GetRequiredService<Order>();
-            var newOrder = new Order();
+
+            var newOrder = _orderFactory();
             bool isOrdering = true;
 
             while (isOrdering)
@@ -89,7 +89,7 @@ namespace Obiektuwa
 
                 DisplayMenuItems(menuItems);
 
-                Console.WriteLine($"\nAktualna kwota: {newOrder.CalculateFinalPrice(_offerManager):f2} zł");
+                Console.WriteLine($"\nAktualna kwota: {newOrder.CalculateFinalPrice():f2} zł");
                 Console.WriteLine("Wpisz numer dania, aby go dodać (lub '0' aby zakończyć):");
 
                 string input = Console.ReadLine()?.Trim() ?? "";
@@ -134,8 +134,8 @@ namespace Obiektuwa
                 }
 
                 Console.WriteLine("\nZapisywanie zamówienia....");
-                _orderManager.Add(newOrder);
-                _orderManager.Save();
+                _orderRepo.Add(newOrder);
+                _orderRepo.Save();
                 Console.WriteLine("Zamówienie przyjęte! Wciśnij enter aby zakończyć....");
             }
             else
@@ -149,7 +149,7 @@ namespace Obiektuwa
         {
             Console.Clear();
             Console.WriteLine("=== AKTYWNE ZAMÓWIENIA ===");
-            var activeOrders = _orderManager.GetActiveOrders();
+            var activeOrders = _orderRepo.FindAll(elem => elem.State == Order.OrderState.inProgress);
 
             if (activeOrders.Count == 0)
             {
@@ -161,10 +161,13 @@ namespace Obiektuwa
             
             
             foreach (var order in activeOrders)
-                {
-                    Console.WriteLine("\n--------------------------");
-                    order.DisplayOrder(_offerManager);
-                }
+            {
+                Console.WriteLine("\n--------------------------");
+                Console.WriteLine(order);
+                var price = _offerManager.CalculateFinalPriceWithDiscounts(order.Positions);
+
+                Console.WriteLine($"Cena łączna {price.finalPrice:f2}, łączne rabaty {price.discount:f2}");
+            }
            
             Console.WriteLine("\nWciśnij enter....");
             Console.ReadKey();
@@ -174,10 +177,10 @@ namespace Obiektuwa
         {
             Console.Clear();
             Console.WriteLine("=== NASZE MENU ===");
-            var items = _productRepo.FindAll(x => true);
+            var items = _productRepo.GetAll();
             foreach (var item in items)
             {
-                Console.WriteLine(item.ToString());
+                Console.WriteLine(item);
             }
             Console.WriteLine("\nWciśnij enter aby wrócić....");
             Console.ReadKey();

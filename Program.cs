@@ -8,10 +8,13 @@ namespace Obiektuwa {
         static ServiceProvider BootstratpDI() {
             return new ServiceCollection()
                 .AddSingleton<Repository<MenuItem>>()
+                .AddSingleton<Repository<Offer>>()
+                .AddSingleton<Repository<Order>>()
+
                 .AddSingleton<OfferManager>()
-                .AddSingleton<OrderManager>()
                 .AddSingleton<AppMenu>()
                 .AddTransient<Order>()
+                .AddSingleton<Func<Order>>(provider => () => provider.GetRequiredService<Order>())
                 .BuildServiceProvider();
         }
 
@@ -19,21 +22,23 @@ namespace Obiektuwa {
             var services = BootstratpDI();
 
             var productRepo = services.GetRequiredService<Repository<MenuItem>>();
-            if (productRepo.FindAll(x => true).Count == 0)
+            if (productRepo.GetAll().Count == 0)
             {
                 MenuItem pizza = new("Pizza", 25.90, MenuItem.FoodCategory.MainCourse);
                 MenuItem burger = new("Burger", 15.50, MenuItem.FoodCategory.MainCourse);
                 productRepo.BulkAdd(new() { pizza, burger });
                 productRepo.Save();
 
-                var offerManager = services.GetRequiredService<OfferManager>();
+                var offers = services.GetRequiredService<Repository<Offer>>();
                 Offer pizzaOffer = new(new() { (pizza, 2) }, (Offer.DiscountType.FixedPrice, 35.00));
-                offerManager.Add(pizzaOffer);
-                offerManager.Save();
+                Offer burgerPizzaOffer = new(new() { (pizza, 1), (burger, 1) }, (Offer.DiscountType.FixedPrice, 1.00));
+                offers.Add(pizzaOffer);
+                offers.Add(burgerPizzaOffer);
+                offers.Save();
             }
+
             var app = services.GetRequiredService<AppMenu>();
             app.Run();
-
         }
     }   
 }
