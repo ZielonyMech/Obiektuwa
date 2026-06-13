@@ -9,13 +9,11 @@ namespace Obiektuwa
     {
         private readonly Repository<MenuItem> _productRepo;
         private readonly Repository<Order> _orderRepo;
-        private readonly Func<Order> _orderFactory;
         private readonly OfferManager _offerManager;
-        public AppMenu(Repository<MenuItem> productRepo, Repository<Order> orderRepo, OfferManager offerManager, Func<Order> orderFactory)
+        public AppMenu(Repository<MenuItem> productRepo, Repository<Order> orderRepo, OfferManager offerManager)
         {
             _productRepo = productRepo;
             _orderRepo = orderRepo;
-            _orderFactory = orderFactory;
             _offerManager = offerManager;
         }
 
@@ -78,7 +76,7 @@ namespace Obiektuwa
             }
 
 
-            var newOrder = _orderFactory();
+            Order newOrder = new Order();
             bool isOrdering = true;
 
             while (isOrdering)
@@ -168,7 +166,7 @@ namespace Obiektuwa
 
                 Console.WriteLine($"Cena łączna {price.finalPrice:f2}, łączne rabaty {price.discount:f2}");
             }
-           
+
             Console.WriteLine("\nWciśnij enter....");
             Console.ReadKey();
         }
