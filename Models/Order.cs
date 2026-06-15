@@ -17,7 +17,7 @@ namespace Obiektuwa.Models
         public Guid ID { get; init; } = Guid.NewGuid();
         public string? Comment { get; set; }
         public bool IsTakeaway { get; set; } = false;
-        public OrderState State { get; private set; } = OrderState.inProgress;
+        public OrderState State { get; set; } = OrderState.inProgress;
         public List<(MenuItem Item, uint Quantity)> Positions { get; } = new List<(MenuItem, uint)>();
 
         public void ChangeState(OrderState newState)
