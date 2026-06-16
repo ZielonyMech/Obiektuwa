@@ -14,6 +14,7 @@ namespace Obiektuwa {
                 .AddSingleton<DataSeeder>()
                 .AddSingleton<OfferManager>()
                 .AddSingleton<AppMenu>()
+
                 .BuildServiceProvider();
         }
 

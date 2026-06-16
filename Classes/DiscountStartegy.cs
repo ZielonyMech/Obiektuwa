@@ -22,7 +22,8 @@ namespace Obiektuwa.Classes {
 
     public class PercentDiscountStrategy : IDiscountStrategy 
     {
-        public double CalculateFinalPrice(double basePrice, double discountValue) {
+        public double CalculateFinalPrice(double basePrice, double discountValue) 
+        {
             return basePrice - (basePrice * discountValue / 100);
         }
     }

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Obiektuwa.Models;
 using Obiektuwa.Classes;
+using Configurator.UI;
 
 namespace Obiektuwa
 {
@@ -9,11 +10,13 @@ namespace Obiektuwa
     {
         private readonly Repository<MenuItem> _productRepo;
         private readonly Repository<Order> _orderRepo;
+        private readonly Repository<Offer> _offerRepo;
         private readonly OfferManager _offerManager;
-        public AppMenu(Repository<MenuItem> productRepo, Repository<Order> orderRepo, OfferManager offerManager)
+        public AppMenu(Repository<MenuItem> productRepo, Repository<Order> orderRepo, Repository<Offer> offerRepo, OfferManager offerManager)
         {
             _productRepo = productRepo;
             _orderRepo = orderRepo;
+            _offerRepo = offerRepo;
             _offerManager = offerManager;
         }
 
@@ -73,12 +76,15 @@ namespace Obiektuwa
                                 CreateNewOrder();
                                 break;
                             case 1:
-                                ShowActiveOrders();
+                                ShowOrders();
                                 break;
                             case 2:
                                 ShowProducts();
                                 break;
                             case 3:
+                                ShowOffers();
+                                break;
+                            case 4:
                                 isRunning = false;
                                 break;
                         }
@@ -88,13 +94,6 @@ namespace Obiektuwa
         
             }
         }
-
-        //private void DisplayMenuItems(List<MenuItem> menuItems) {
-        //
-        //   for (int i = 0; i < menuItems.Count; i++) {
-        //        Console.WriteLine($"{i + 1}. {menuItems[i].Name} - {menuItems[i].Price:f2} zł");
-        //    }
-        //}
 
         private void CreateNewOrder()
         {
@@ -250,16 +249,17 @@ namespace Obiektuwa
             Console.ReadKey(true);
         }
 
-        private void ShowActiveOrders()
+        private void ShowOrders()
         {
             bool isViewing = true;
             int selectedIndex = 0;
+            Order.OrderState currState = Order.OrderState.none;
+            var allOrders = _orderRepo.GetAll();
+
+            List<object> options = new() { "[ WRÓĆ DO MENU GŁÓWNEGO ]", "[ WYCZYŚĆ LISTĘ ZAMÓWIEŃ ]", "[inProgress] [finished] [canceled] [none]" };
 
             while (isViewing)
             {
-                var allOrders = _orderRepo.GetAll();
-                int totalOptions = allOrders.Count + 2;
-
                 Console.Clear();
                 Console.WriteLine("=== LISTA ZAMÓWIEŃ ===");
 
@@ -271,58 +271,57 @@ namespace Obiektuwa
                     return;
                 }
 
-                if (selectedIndex >= totalOptions) selectedIndex = totalOptions - 1;
+                var filteredOrders = currState == Order.OrderState.none ? allOrders : allOrders.Where(elem => elem.State == currState);
+                List<Object> menuOptions = options.Concat(filteredOrders).ToList();
 
-                if (selectedIndex == 0)
-                {
-                    Console.BackgroundColor = ConsoleColor.White;
-                    Console.ForegroundColor = ConsoleColor.Black;
-                    Console.WriteLine("> [ WRÓĆ DO MENU GŁÓWNEGO ]");
-                    Console.ResetColor();
-                }
-                else
-                {
-                    Console.WriteLine("  [ WRÓĆ DO MENU GŁÓWNEGO ]");
-                }
+                if (selectedIndex >= menuOptions.Count) selectedIndex = menuOptions.Count - 1;
 
-                if (selectedIndex == 1)
+                for (int i = 0; i < menuOptions.Count; i++)
                 {
-                    Console.BackgroundColor = ConsoleColor.White;
-                    Console.ForegroundColor = ConsoleColor.Black;
-                    Console.WriteLine("> [ WYCZYŚĆ LISTĘ ZAMÓWIEŃ ]\n");
-                    Console.ResetColor();
-                }
-                else
-                {
-                    Console.WriteLine("  [ WYCZYŚĆ LISTĘ ZAMÓWIEŃ ]\n");
-                }
+                    object optionString = menuOptions[i];
 
-                for (int i = 0; i < allOrders.Count; i++)
-                {
-                    int currentIndex = i + 2;
-                    var order = allOrders[i];
-                    var price = _offerManager.CalculateFinalPriceWithDiscounts(order.Positions);
-
-                    int itemsCount = order.Positions.Sum(p => (int)p.Quantity);
-
-                    string commentInfo = string.IsNullOrEmpty(order.Comment) ? "Brak" : order.Comment;
-                    if (commentInfo.Length > 10)
+                    if (menuOptions[i] is Order) 
                     {
-                        commentInfo = commentInfo.Substring(0, 10) + "...";
+                        Order order = (Order)menuOptions[i];
+                        var price = _offerManager.CalculateFinalPriceWithDiscounts(order.Positions);
+
+                        int itemsCount = order.Positions.Sum(p => (int)p.Quantity);
+
+                        string commentInfo = string.IsNullOrEmpty(order.Comment) ? "Brak" : order.Comment;
+                        if (commentInfo.Length > 10)
+                        {
+                            commentInfo = commentInfo.Substring(0, 10) + "...";
+                        }
+
+                        optionString = $"[{order.State}] Zamówienie ({itemsCount} poz.) | Do zapłaty: {price.finalPrice:f2} zł | Komentarz: {commentInfo}";
                     }
 
-                    string orderSummary = $"[{order.State}] Zamówienie ({itemsCount} poz.) | Do zapłaty: {price.finalPrice:f2} zł | Komentarz: {commentInfo}";
-
-                    if (currentIndex == selectedIndex)
+                    if (i == 2) 
                     {
-                        Console.BackgroundColor = ConsoleColor.White;
-                        Console.ForegroundColor = ConsoleColor.Black;
-                        Console.WriteLine($"> {orderSummary}");
-                        Console.ResetColor();
+                        var states = ((string)options[i]).Split(' ');
+                    
+                        for (int j = 0; j < 4; j++) 
+                        {
+                            if (j == (int)currState) 
+                            {
+                                ColoredConsole.Write(states[j], ConsoleColor.Green, ConsoleColor.Black);
+                                continue;
+                            }
+
+                            Console.Write(states[j]);
+                        }
+
+                        Console.WriteLine();
+                        continue;
+                    }
+
+                    if (i == selectedIndex)
+                    {
+                        ColoredConsole.WriteLine($"> {optionString}", ConsoleColor.Black, ConsoleColor.White);
                     }
                     else
                     {
-                        Console.WriteLine($"  {orderSummary}");
+                        Console.WriteLine($"  {optionString}");
                     }
                 }
 
@@ -332,11 +331,11 @@ namespace Obiektuwa
                 {
                     case ConsoleKey.UpArrow:
                         selectedIndex--;
-                        if (selectedIndex < 0) selectedIndex = totalOptions - 1;
+                        if (selectedIndex < 0) selectedIndex = menuOptions.Count - 1;
                         break;
                     case ConsoleKey.DownArrow:
                         selectedIndex++;
-                        if (selectedIndex >= totalOptions) selectedIndex = 0;
+                        if (selectedIndex >= menuOptions.Count) selectedIndex = 0;
                         break;
                     case ConsoleKey.Enter:
                         if (selectedIndex == 0)
@@ -355,6 +354,11 @@ namespace Obiektuwa
                                 _orderRepo.GetAll().Clear();
                                 _orderRepo.Save();
                             }
+                        }
+                        else if (selectedIndex == 2) 
+                        {
+                            var states = ((string)options[selectedIndex]).Split(' ');
+                            currState = (Order.OrderState)(((int)currState + 1) % 4);
                         }
                         else
                         {
@@ -443,6 +447,30 @@ namespace Obiektuwa
             }
             Console.WriteLine("\nWciśnij enter aby wrócić....");
             Console.ReadKey();
+        }
+
+        private void ShowOffers()
+        {
+            Console.Clear();
+            Console.WriteLine("=== AKTUALNE OFERTY ===\n");
+            var offers = _offerRepo.GetAll();
+
+            if (offers.Count == 0)
+            {
+                Console.WriteLine("Brak dostępnych ofert.");
+            }
+            else
+            {
+                for (int i = 0; i < offers.Count; i++)
+                {
+                    Console.WriteLine($"Oferta #{i + 1}");
+                    Console.WriteLine(offers[i]);
+                    Console.WriteLine(new string('-', 40));
+                }
+            }
+
+            Console.WriteLine("\nWciśnij enter aby wrócić....");
+            Console.ReadKey(true);
         }
     }
 }
