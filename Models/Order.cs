@@ -11,7 +11,8 @@ namespace Obiektuwa.Models
         {
             inProgress,
             finished,
-            canceled
+            canceled,
+            none
         }
 
         public Guid ID { get; init; } = Guid.NewGuid();
