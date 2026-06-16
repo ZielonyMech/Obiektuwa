@@ -23,10 +23,11 @@ namespace Obiektuwa
             int selectedIndex = 0;
 
             string[] options = {
-            "Złóż nowe zamówienie",
-            "Pokaż aktywne zamówienia",
-            "Zobacz Menu",
-            "Wyjdź"
+                "Złóż nowe zamówienie",
+                "Pokaż aktywne zamówienia",
+                "Zobacz Menu",
+                "Pokaż oferty",
+                "Wyjdź"
             };
 
 

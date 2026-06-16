@@ -53,7 +53,7 @@ namespace Obiektuwa.Classes {
         }
 
         public void Save() {
-            reader.writeFile(ObjectList);
+            reader.WriteFile(ObjectList);
         }
     }
 }

@@ -32,13 +32,9 @@ namespace Obiektuwa.Models {
 
         public double GetFinalPrice() {
             double baseOfferPrice = GetOfferBasePrice();
+            IDiscountStrategy strategy = DiscountStrategyFactory.Create(Discout.type);
 
-            return (Discout.type) switch {
-                DiscountType.FixedPrice => Discout.value,
-                DiscountType.Percent => baseOfferPrice - (baseOfferPrice * Discout.value / 100),
-                DiscountType.FixedAmount => baseOfferPrice - Discout.value,
-                _ => baseOfferPrice
-            };
+            return strategy.CalculateFinalPrice(baseOfferPrice, Discout.value);
         }
 
         public double GetDiscountAmount() {
