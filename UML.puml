@@ -1,0 +1,197 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+package "UI" {
+
+    class AppMenu {
+        - productRepo : Repository<MenuItem>
+        - orderRepo : Repository<Order>
+        - offerRepo : Repository<Offer>
+        - offerManager : OfferManager
+        + AppMenu(productRepo : Repository<MenuItem>, orderRepo : Repository<Order>, offerRepo : Repository<Offer>, offerManager : OfferManager)
+        + Run() : void
+        - CreateNewOrder() : void
+        - ShowOrders() : void
+        - ManageOrder(order : Order) : void
+        - ShowProducts() : void
+        - ShowOffers() : void
+        - CreateNewOffer() : void
+    }
+
+    class ColoredConsole {
+        + ColoredConsole()
+        + WriteLine(value : object, foregroundColor : ConsoleColor, backgroundColor : ConsoleColor) : void
+        + Write(value : object, foregroundColor : ConsoleColor, backgroundColor : ConsoleColor) : void
+    }
+
+}
+
+package "Logika biznesowa" {
+
+    class OfferManager {
+        - offerRepository : Repository<Offer>
+        + OfferManager(offerRepository : Repository<Offer>)
+        + CalculateFinalPriceWithDiscounts(order : Order) : PriceResult
+        - IsOfferApplicable(offer : Offer, remaining : Dictionary<Guid, uint>) : bool
+        - DeductUsedItems(offer : Offer, remaining : Dictionary<Guid, uint>) : void
+    }
+
+    interface IDiscountStrategy {
+        + CalculateFinalPrice(basePrice : double, discountValue : double) : double
+    }
+
+    class DiscountStrategyFactory {
+        + Create(discountType : DiscountType) : IDiscountStrategy
+    }
+
+    class PercentDiscountStrategy {
+        + PercentDiscountStrategy()
+        + CalculateFinalPrice(basePrice : double, discountValue : double) : double
+    }
+
+    class StudentDiscountStrategy {
+        + StudentDiscountStrategy()
+        + CalculateFinalPrice(basePrice : double, discountValue : double) : double
+    }
+
+    class FixedPriceDiscountStrategy {
+        + FixedPriceDiscountStrategy()
+        + CalculateFinalPrice(basePrice : double, discountValue : double) : double
+    }
+
+    class FixedAmountDiscountStrategy {
+        + FixedAmountDiscountStrategy()
+        + CalculateFinalPrice(basePrice : double, discountValue : double) : double
+    }
+
+}
+
+package "Dane i infrastruktura" {
+
+    class "Repository<T>" as RepositoryT <<template>> {
+        # reader : FileHandler<T>
+        # ObjectList : List<T>
+        + Repository(filepath : string?)
+        + Repository(objectList : List<T>, filepath : string?)
+        + FindOne(conditions : Predicate<T>) : T
+        + FindAll(conditions : Predicate<T>) : List<T>
+        + GetAll() : List<T>
+        + Remove(obj : T) : bool
+        + Add(obj : T) : void
+        + BulkAdd(obj : List<T>) : void
+        + Save() : void
+    }
+
+    class "FileHandler<T>" as FileHandlerT <<template>> {
+        - filepath : string
+        + FileHandler(filepath : string)
+        + ReadFile() : List<T>
+        + WriteFile(obj : List<T>) : bool
+        + writeFile(obj : List<T>) : bool
+    }
+
+    class Helpers {
+        + mainDirectory : string
+        + workingDirectory : string
+        + GetClassCacheDirectoryOfT() : string
+    }
+
+    class DataSeeder {
+        - productRepo : Repository<MenuItem>
+        - orderRepo : Repository<Order>
+        - offerRepo : Repository<Offer>
+        + DataSeeder(productRepo : Repository<MenuItem>, orderRepo : Repository<Order>, offerRepo : Repository<Offer>)
+        + SeedData() : void
+        - SeedProduct() : void
+        - SeedOffer() : void
+        - SeedOrder() : void
+    }
+}
+
+package "Modele" {
+
+    class MenuItem {
+        + ID : Guid <<get>> <<init>>
+        + Name : string <<get>> <<init>>
+        + Price : double <<get>> <<init>>
+        + Type : FoodCategory <<get>> <<init>>
+        + MenuItem(name : string, price : double, type : FoodCategory)
+        + ToString() : string
+    }
+
+    class Offer {
+        + RequiredPositions : List<OfferPosition> <<get>> <<init>>
+        + Discout : DiscountType
+        + Offer(requiredPositions : List<OfferPosition>, discount : DiscountType)
+        + GetOfferBasePrice() : double
+        + GetFinalPrice() : double
+        + GetDiscountAmount() : double
+        + ToString() : string
+    }
+
+    class Order {
+        + ID : Guid <<get>> <<init>>
+        + Comment : string? <<get>> <<set>>
+        + IsTakeaway : bool <<get>> <<set>>
+        + HasStudentDiscount : bool <<get>> <<set>>
+        + State : OrderState <<get>> <<set>>
+        + Positions : List<OrderPosition> <<get>>
+        + Order()
+        + ChangeState(newState : OrderState) : void
+        + operatorPlus(order : Order?, item : MenuItem?) : Order
+        + operatorMinus(order : Order?, item : MenuItem?) : Order
+        + ToString() : string
+        + CalculateFinalPrice() : double
+    }
+
+    enum FoodCategory {
+        None
+        Starter
+        MainCourse
+        Dessert
+        Drink
+    }
+
+    enum DiscountType {
+        FixedPrice
+        Percent
+        FixedAmount
+        Student
+    }
+
+    enum OrderState {
+        inProgress
+        finished
+        canceled
+        none
+    }
+
+}
+
+AppMenu --> RepositoryT : zarzadza danymi
+AppMenu --> OfferManager : liczy ceny
+AppMenu ..> ColoredConsole : koloruje wyjscie
+
+DataSeeder --> RepositoryT : wypelnia danymi
+
+RepositoryT *-- FileHandlerT : zapis i odczyt
+RepositoryT ..> Helpers : sciezka pliku
+
+OfferManager --> RepositoryT : pobiera oferty
+OfferManager ..> DiscountStrategyFactory : wybiera strategie
+
+DiscountStrategyFactory ..> IDiscountStrategy : tworzy
+IDiscountStrategy <|.. PercentDiscountStrategy
+IDiscountStrategy <|.. StudentDiscountStrategy
+IDiscountStrategy <|.. FixedPriceDiscountStrategy
+IDiscountStrategy <|.. FixedAmountDiscountStrategy
+
+Offer o-- MenuItem : wymagane pozycje
+Offer --> DiscountType : typ rabatu
+
+Order o-- MenuItem : pozycje zamowienia
+Order --> OrderState : status
+MenuItem --> FoodCategory : kategoria
+
+@enduml
