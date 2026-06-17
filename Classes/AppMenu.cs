@@ -30,6 +30,7 @@ namespace Obiektuwa
                 "Pokaż aktywne zamówienia",
                 "Zobacz Menu",
                 "Pokaż oferty",
+                "Dodaj nową ofertę",
                 "Wyjdź"
             };
 
@@ -85,6 +86,9 @@ namespace Obiektuwa
                                 ShowOffers();
                                 break;
                             case 4:
+                                CreateNewOffer();
+                                break;
+                            case 5:
                                 isRunning = false;
                                 break;
                         }
@@ -98,6 +102,7 @@ namespace Obiektuwa
         private void CreateNewOrder()
         {
             var menuItems = _productRepo.GetAll();
+            var offersList = _offerRepo.GetAll();
 
             if (menuItems.Count == 0)
             {
@@ -114,14 +119,15 @@ namespace Obiektuwa
             int selectedIndex = 0;
 
             bool showingCategories = true;
+            bool showingOffers = false;
             MenuItem.FoodCategory currentCategory = MenuItem.FoodCategory.None;
             List<MenuItem> currentItems = new List<MenuItem>();
 
             var categories = new List<MenuItem.FoodCategory> {
-                MenuItem.FoodCategory.Starter,
-                MenuItem.FoodCategory.MainCourse,
-                MenuItem.FoodCategory.Dessert,
-                MenuItem.FoodCategory.Drink
+            MenuItem.FoodCategory.Starter,
+            MenuItem.FoodCategory.MainCourse,
+            MenuItem.FoodCategory.Dessert,
+            MenuItem.FoodCategory.Drink
             };
 
             while (isOrdering)
@@ -139,7 +145,10 @@ namespace Obiektuwa
                 }
                 Console.WriteLine();
 
-                int totalOptions = showingCategories ? categories.Count + 1 : currentItems.Count + 1;
+                int totalOptions;
+                if (showingCategories) totalOptions = categories.Count + 2;
+                else if (showingOffers) totalOptions = offersList.Count + 1;
+                else totalOptions = currentItems.Count + 1;
 
                 for (int i = 0; i < totalOptions; i++)
                 {
@@ -154,7 +163,17 @@ namespace Obiektuwa
                     if (showingCategories)
                     {
                         if (i == 0) Console.WriteLine(isSelected ? "> [ ZAKOŃCZ DOBIERANIE ]" : "  [ ZAKOŃCZ DOBIERANIE ]");
+                        else if (i == categories.Count + 1) Console.WriteLine(isSelected ? "> Offers" : "  Offers");
                         else Console.WriteLine(isSelected ? $"> {categories[i - 1]}" : $"  {categories[i - 1]}");
+                    }
+                    else if (showingOffers)
+                    {
+                        if (i == 0) Console.WriteLine(isSelected ? "> [ WRÓĆ ]" : "  [ WRÓĆ ]");
+                        else
+                        {
+                            string offerInfo = $"Oferta #{i}";
+                            Console.WriteLine(isSelected ? $"> {offerInfo}" : $"  {offerInfo}");
+                        }
                     }
                     else
                     {
@@ -189,12 +208,42 @@ namespace Obiektuwa
                             {
                                 isOrdering = false;
                             }
+                            else if (selectedIndex == categories.Count + 1)
+                            {
+                                showingCategories = false;
+                                showingOffers = true;
+                                selectedIndex = 0;
+                            }
                             else
                             {
                                 currentCategory = categories[selectedIndex - 1];
                                 currentItems = menuItems.Where(i => i.Type == currentCategory).ToList();
                                 showingCategories = false;
+                                showingOffers = false;
                                 selectedIndex = 0;
+                            }
+                        }
+                        else if (showingOffers)
+                        {
+                            if (selectedIndex == 0)
+                            {
+                                showingCategories = true;
+                                showingOffers = false;
+                                selectedIndex = 0;
+                            }
+                            else
+                            {
+                                var offer = offersList[selectedIndex - 1];
+
+                                foreach (var (item, quantity) in offer.RequiredPositions)
+                                {
+                                    for (int q = 0; q < quantity; q++)
+                                    {
+                                        newOrder += item;
+                                    }
+                                }
+
+                                lastAdded = $"Oferta #{selectedIndex}";
                             }
                         }
                         else
@@ -481,6 +530,173 @@ namespace Obiektuwa
             }
 
             Console.WriteLine("\nWciśnij enter aby wrócić....");
+            Console.ReadKey(true);
+        }
+        private void CreateNewOffer()
+        {
+            var menuItems = _productRepo.GetAll();
+
+            if (menuItems.Count == 0)
+            {
+                Console.Clear();
+                Console.WriteLine("Menu jest puste, nie można stworzyć oferty :/");
+                Console.WriteLine("Wciśnij enter....");
+                Console.ReadKey(true);
+                return;
+            }
+            List<(MenuItem Item, uint Quantity)> offerPositions = new();
+
+            bool isOrdering = true;
+            string lastAdded = "";
+            int selectedIndex = 0;
+
+            bool showingCategories = true;
+            MenuItem.FoodCategory currentCategory = MenuItem.FoodCategory.None;
+            List<MenuItem> currentItems = new List<MenuItem>();
+
+            var categories = new List<MenuItem.FoodCategory> {
+                MenuItem.FoodCategory.Starter,
+                MenuItem.FoodCategory.MainCourse,
+                MenuItem.FoodCategory.Dessert,
+                MenuItem.FoodCategory.Drink
+            };
+
+            while (isOrdering)
+            {
+                Console.Clear();
+                Console.WriteLine("=== TWORZENIE NOWEJ OFERTY ===");
+                int totalItems = (int)offerPositions.Sum(p => p.Quantity);
+                Console.WriteLine($"W ofercie: {totalItems} szt.");
+
+                if (!string.IsNullOrEmpty(lastAdded))
+                {
+                    ColoredConsole.WriteLine($"(Ostatnio dodano: {lastAdded})", ConsoleColor.Green, ConsoleColor.Black);
+                    Console.WriteLine();
+                }
+
+                int totalOptions = showingCategories ? categories.Count + 1 : currentItems.Count + 1;
+
+                for (int i = 0; i < totalOptions; i++)
+                {
+                    bool isSelected = (i == selectedIndex);
+
+                    if (isSelected)
+                    {
+                        Console.BackgroundColor = ConsoleColor.White;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                    }
+
+                    if (showingCategories)
+                    {
+                        if (i == 0) Console.WriteLine(isSelected ? "> [ ZAKOŃCZ DOBIERANIE ]" : "  [ ZAKOŃCZ DOBIERANIE ]");
+                        else Console.WriteLine(isSelected ? $"> {categories[i - 1]}" : $"  {categories[i - 1]}");
+                    }
+                    else
+                    {
+                        if (i == 0) Console.WriteLine(isSelected ? "> [ WRÓĆ ]" : "  [ WRÓĆ ]");
+                        else
+                        {
+                            var item = currentItems[i - 1];
+                            Console.WriteLine(isSelected ? $"> {item.Name} - {item.Price:f2} zł" : $"  {item.Name} - {item.Price:f2} zł");
+                        }
+                    }
+
+                    if (isSelected) Console.ResetColor();
+                }
+
+                ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+                switch (keyInfo.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        selectedIndex--;
+                        if (selectedIndex < 0) selectedIndex = totalOptions - 1;
+                        break;
+
+                    case ConsoleKey.DownArrow:
+                        selectedIndex++;
+                        if (selectedIndex >= totalOptions) selectedIndex = 0;
+                        break;
+
+                    case ConsoleKey.Enter:
+                        if (showingCategories)
+                        {
+                            if (selectedIndex == 0) isOrdering = false;
+                            else
+                            {
+                                currentCategory = categories[selectedIndex - 1];
+                                currentItems = menuItems.Where(i => i.Type == currentCategory).ToList();
+                                showingCategories = false;
+                                selectedIndex = 0;
+                            }
+                        }
+                        else
+                        {
+                            if (selectedIndex == 0)
+                            {
+                                showingCategories = true;
+                                selectedIndex = 0;
+                            }
+                            else
+                            {
+                                var product = currentItems[selectedIndex - 1];
+                                var existingIndex = offerPositions.FindIndex(p => p.Item.ID == product.ID);
+                                if (existingIndex >= 0)
+                                {
+                                    var existing = offerPositions[existingIndex];
+                                    offerPositions[existingIndex] = (existing.Item, existing.Quantity + 1);
+                                }
+                                else
+                                {
+                                    offerPositions.Add((product, 1));
+                                }
+                                lastAdded = product.Name;
+                            }
+                        }
+                        break;
+                }
+            }
+            if (offerPositions.Count > 0)
+            {
+                Console.Clear();
+                Console.WriteLine("=== USTAWIANIE ZNIŻKI DLA OFERTY ===");
+                Offer.DiscountType selectedDiscountType = Offer.DiscountType.Percent;
+                Console.WriteLine("Wybierz rodzaj zniżki:");
+                Console.WriteLine("1. Stała cena za cały zestaw (FixedPrice)");
+                Console.WriteLine("2. Zniżka procentowa na zestaw (Percent)");
+                Console.WriteLine("3. Zniżka kwotowa od całości (FixedAmount)");
+
+                while (true)
+                {
+                    Console.Write("\nTwój wybór (1-3): ");
+                    string typeInput = Console.ReadLine()?.Trim() ?? "";
+                    if (typeInput == "1") { selectedDiscountType = Offer.DiscountType.FixedPrice; break; }
+                    if (typeInput == "2") { selectedDiscountType = Offer.DiscountType.Percent; break; }
+                    if (typeInput == "3") { selectedDiscountType = Offer.DiscountType.FixedAmount; break; }
+                    Console.WriteLine("Nieprawidłowy wybór. Wpisz 1, 2 lub 3.");
+                }
+
+                double discountValue = 0;
+                while (true)
+                {
+                    Console.Write("\nPodaj wartość zniżki (np. 15 dla 15% lub 19,99 dla ceny): ");
+                    string valInput = Console.ReadLine()?.Trim() ?? "";
+                    if (double.TryParse(valInput, out discountValue) && discountValue >= 0)
+                    {
+                        break;
+                    }
+                    Console.WriteLine("Nieprawidłowa wartość.");
+                }
+
+                Console.WriteLine("\nZapisywanie oferty....");
+                Offer newOffer = new Offer(offerPositions, (selectedDiscountType, discountValue));
+                _offerRepo.Add(newOffer);
+                _offerRepo.Save();
+                Console.WriteLine("Oferta dodana pomyślnie! Wciśnij enter aby zakończyć....");
+            }
+            else
+            {
+                Console.WriteLine("\nAnulowano tworzenie pustej oferty. Wciśnij enter aby zakończyć...");
+            }
             Console.ReadKey(true);
         }
     }
