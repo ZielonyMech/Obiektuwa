@@ -12,9 +12,12 @@ namespace Obiektuwa.Classes {
             _offerRepository = offerRepository;
         }
 
-        public (double finalPrice, double discount) CalculateFinalPriceWithDiscounts(List<(MenuItem Item, uint Quantity)> orderPositions) {
+        public (double finalPrice, double discount) CalculateFinalPriceWithDiscounts(Order order) {
+            ArgumentNullException.ThrowIfNull(order);
+
             double finalPrice = 0.0;
             double discount = 0.0;
+            var orderPositions = order.Positions;
 
             List<Offer> applicableOffers = new List<Offer>();
 
@@ -45,6 +48,15 @@ namespace Obiektuwa.Classes {
                 var item = orderPositions.First(p => p.Item.ID == elem.Key).Item;
                 return item.Price * elem.Value;
             });
+
+            if (order.HasStudentDiscount) {
+                IDiscountStrategy studentDiscount = DiscountStrategyFactory.Create(Offer.DiscountType.Student);
+                double priceAfterStudentDiscount = studentDiscount.CalculateFinalPrice(finalPrice, 10);
+                double studentDiscountAmount = Math.Round(finalPrice - priceAfterStudentDiscount, 2);
+
+                finalPrice = priceAfterStudentDiscount;
+                discount += studentDiscountAmount;
+            }
 
             return (finalPrice, discount);
         }

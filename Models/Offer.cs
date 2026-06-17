@@ -9,7 +9,8 @@ namespace Obiektuwa.Models {
         public enum DiscountType {
             FixedPrice,
             Percent,
-            FixedAmount
+            FixedAmount,
+            Student
         }
         
         public List<(MenuItem item, uint quantity)> RequiredPositions { get; init; }
@@ -47,6 +48,7 @@ namespace Obiektuwa.Models {
                 DiscountType.FixedPrice => $"cena zestawu {Discout.value:f2} zł",
                 DiscountType.Percent => $"rabat {Discout.value:f0}%",
                 DiscountType.FixedAmount => $"rabat {Discout.value:f2} zł",
+                DiscountType.Student => $"zniżka studencka {Discout.value:f0}%",
                 _ => "brak rabatu"
             };
 

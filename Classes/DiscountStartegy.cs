@@ -15,6 +15,7 @@ namespace Obiektuwa.Classes {
                 Offer.DiscountType.FixedPrice => new FixedPriceDiscountStrategy(),
                 Offer.DiscountType.Percent => new PercentDiscountStrategy(),
                 Offer.DiscountType.FixedAmount => new FixedAmountDiscountStrategy(),
+                Offer.DiscountType.Student => new StudentDiscountStrategy(),
                 _ => throw new ArgumentOutOfRangeException(nameof(discountType), discountType, "Nieobsługiwany typ rabatu")
             };
         }
@@ -24,6 +25,12 @@ namespace Obiektuwa.Classes {
     {
         public double CalculateFinalPrice(double basePrice, double discountValue) 
         {
+            return basePrice - (basePrice * discountValue / 100);
+        }
+    }
+
+    public class StudentDiscountStrategy : IDiscountStrategy {
+        public double CalculateFinalPrice(double basePrice, double discountValue) {
             return basePrice - (basePrice * discountValue / 100);
         }
     }

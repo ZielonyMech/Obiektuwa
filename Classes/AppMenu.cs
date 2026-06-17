@@ -236,6 +236,14 @@ namespace Obiektuwa
                     newOrder.IsTakeaway = true;
                 }
 
+                Console.WriteLine("\nCzy klient ma zniżkę studencką? (T/N):");
+                string studentInput = Console.ReadLine()?.Trim().ToUpper() ?? "";
+
+                if (studentInput == "T" || studentInput == "TAK")
+                {
+                    newOrder.HasStudentDiscount = true;
+                }
+
                 Console.WriteLine("\nZapisywanie zamówienia....");
                 _orderRepo.Add(newOrder);
                 _orderRepo.Save();
@@ -283,7 +291,7 @@ namespace Obiektuwa
                     if (menuOptions[i] is Order) 
                     {
                         Order order = (Order)menuOptions[i];
-                        var price = _offerManager.CalculateFinalPriceWithDiscounts(order.Positions);
+                        var price = _offerManager.CalculateFinalPriceWithDiscounts(order);
 
                         int itemsCount = order.Positions.Sum(p => (int)p.Quantity);
 
@@ -299,7 +307,10 @@ namespace Obiektuwa
                     if (i == 2) 
                     {
                         var states = ((string)options[i]).Split(' ');
-                    
+
+                        if (i == selectedIndex) Console.Write("> ");
+                        else Console.Write(" ");
+
                         for (int j = 0; j < 4; j++) 
                         {
                             if (j == (int)currState) 
@@ -321,7 +332,7 @@ namespace Obiektuwa
                     }
                     else
                     {
-                        Console.WriteLine($"  {optionString}");
+                        Console.WriteLine($" {optionString}");
                     }
                 }
 
@@ -362,7 +373,7 @@ namespace Obiektuwa
                         }
                         else
                         {
-                            var selectedOrder = allOrders[selectedIndex - 2];
+                            var selectedOrder = (Order)menuOptions[selectedIndex];
                             ManageOrder(selectedOrder);
                         }
                         break;
@@ -380,7 +391,7 @@ namespace Obiektuwa
                 Console.Clear();
                 Console.WriteLine("=== SZCZEGÓŁY ZAMÓWIENIA ===\n");
                 Console.WriteLine(order);
-                var price = _offerManager.CalculateFinalPriceWithDiscounts(order.Positions);
+                var price = _offerManager.CalculateFinalPriceWithDiscounts(order);
                 Console.WriteLine($"Cena po rabatach: {price.finalPrice:f2} zł (Naliczony rabat: {price.discount:f2} zł)\n");
                 Console.WriteLine("Wybierz akcję dla tego zamówienia:");
 

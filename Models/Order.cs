@@ -18,6 +18,7 @@ namespace Obiektuwa.Models
         public Guid ID { get; init; } = Guid.NewGuid();
         public string? Comment { get; set; }
         public bool IsTakeaway { get; set; } = false;
+        public bool HasStudentDiscount { get; set; } = false;
         public OrderState State { get; set; } = OrderState.inProgress;
         public List<(MenuItem Item, uint Quantity)> Positions { get; } = new List<(MenuItem, uint)>();
 
@@ -83,6 +84,7 @@ namespace Obiektuwa.Models
             sb.AppendLine($"Zamówienie ID: {ID}");
             sb.AppendLine($"Komentarz: {Comment}");
             sb.AppendLine($"Na wynos: {(IsTakeaway ? "Tak" : "Nie")}");
+            sb.AppendLine($"Zniżka studencka: {(HasStudentDiscount ? "Tak" : "Nie")}");
             sb.AppendLine($"Stan zamówienia: {State}");
             sb.AppendLine($"{"Ilość",-10} | Pozycja");
             sb.AppendLine(new string('-', 40));
